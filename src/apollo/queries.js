@@ -1,24 +1,27 @@
 import { gql } from "@apollo/client";
 
-export const GET_CHARACTER = gql(
-  `query  getCharacter($idCharacter : ID!) {
-    character(id: $idCharacter ) {
+const GET_CHARACTER = gql`
+  query character($id: ID!) {
+    character(id: $id) {
       id
       name
       status
       species
       type
       gender
-      origin{
-        id
+      origin {
         name
       }
-      location{
-        id
+      location {
         name
       }
       image
+      episode {
+        name
+      }
       created
     }
   }
-  `)
+`;
+
+export { GET_CHARACTER };
