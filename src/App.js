@@ -1,36 +1,62 @@
-import './App.css';
-import { useLazyQuery } from '@apollo/client';
-import { GET_CHARACTER } from './apollo/queries';
-import Character from './components/character';
-import ListCharacters from './components/list-character';
-
-export function DisplayCharacter(props) {
-  const getRandomInt = Math.floor(Math.random() * 826);
-  const [getCharacter, { loading, called, data }] = useLazyQuery(GET_CHARACTER);
-  
-  const manejarEnvio = newcharts => {
-    newcharts.preventDefault();
-    getCharacter({variables: {idCharacter: getRandomInt}});
-    props.onSubmit(data.character);
+import React, { Component } from "react";
+import { GET_CHARACTER } from "../src/apollo/queries"
+import Layout from "./components/layout/components";
+import CharacterGenerator from "./views/character-generator";
+import History from "./views/history";
+import { withApollo } from "@apollo/react-hoc";
+class App extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      character: null,
+      history: [],
+      loadingCharacter: false
+    };
   }
-    if (called && loading) return <p>Loading ...</p>
-    if (!called) {
-      return <>
-      <h2>No se ha cargado ningún personaje</h2>
-      <button onClick={manejarEnvio}>Load greeting</button>
-      </>
-    }
-    return <> <Character character={data?.character} />
-          <button onClick={manejarEnvio}>Load greeting</button></>
+
+  requestCharacter = async () => {
+    this.setState({ loadingCharacter: true });
+    const { client } = this.props;
+    const { history } = this.state;
+    const randomId = Math.ceil(Math.random() * 826);
+    const {
+      data: { character }
+    } = await client.query({
+      query: GET_CHARACTER,
+      variables: { id: randomId }
+    });
+    this.setState({
+      character,
+      history: [character, ...history]
+    });
+    this.setState({ loadingCharacter: false });
+  };
+
+  selectCharacter = id => {
+    const { history } = this.state;
+
+    this.setState({
+      character: history[id]
+    });
+
+    window.scrollTo(0, 0);
+  };
+
+  render() {
+    const { loadingCharacter, character, history } = this.state;
+    return (
+      <Layout>
+        <CharacterGenerator
+          loading={loadingCharacter}
+          character={character}
+          requestCharacter={this.requestCharacter}
+        />
+        {history.length > 0 && (
+          <History selectCharacter={this.selectCharacter} history={history} />
+        )}
+      </Layout>
+    );
+  }
 }
 
-
-function App() {
-  return (
-    <div className="App">
-      <ListCharacters />
-    </div>
-  );
-}
-
-export default App;
+export default withApollo(App);
